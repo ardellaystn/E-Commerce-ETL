@@ -8,9 +8,16 @@ spark = SparkSession.builder \
 jdbc_url_postgres = "jdbc:postgresql://localhost/lokakarya"
 jdbc_properties_postgres = {
     "user": "postgres",
-    "password": "password",
+    "password": "ardella123",
     "driver": "org.postgresql.Driver"
 }
+
+mongo_uri_dimesions = "mongodb://172.16.36.13:27017/lokakarya.dimensions"
+mongo_uri_images = "mongodb://172.16.36.13:27017/lokakarya.images"
+mongo_uri_prices = "mongodb://172.16.36.13:27017/lokakarya.prices"
+mongo_uri_options = "mongodb://172.16.36.13:27017/lokakarya.options"
+mongo_uri_product_types = "mongodb://172.16.36.13:27017/lokakarya.product_types"
+mongo_uri_products = "mongodb://172.16.36.13:27017/lokakarya.products"
 
 # Database Postgresql dan file XLSX
 df_pg_users = spark.read.jdbc(url=jdbc_url_postgres, table="users", properties=jdbc_properties_postgres)
@@ -63,7 +70,6 @@ df_xl_source = pd.read_excel("C:\\Users\\pc\\OneDrive\\Documents\\Ardella File\\
 df_combined_source = pd.concat([df_pg_source_pd, df_xl_source], axis=0, ignore_index=True)
 
 # Dokumen Database (MongoDB)
-mongo_uri = "mongodb://172.16.36.13:27017/lokakarya.dimensions"
 df_mdb_dimensions = spark.read.format("mongo").option("uri", mongo_uri).load()
 df_mdb_dimensions = df_mdb_dimensions.select(
     col("_id"),
@@ -73,7 +79,6 @@ df_mdb_dimensions = df_mdb_dimensions.select(
     col("width"))
 df_mdb_dimensions = df_mdb_dimensions.toPandas()
 
-mongo_uri = "mongodb://172.16.36.13:27017/lokakarya.images"
 df_mdb_images = spark.read.format("mongo").option("uri", mongo_uri).load()
 df_mdb_images = df_mdb_images.select(
     col("_id"),
@@ -81,7 +86,6 @@ df_mdb_images = df_mdb_images.select(
     col("source"))
 df_mdb_images = df_mdb_images.toPandas()
 
-mongo_uri = "mongodb://172.16.36.13:27017/lokakarya.prices"
 df_mdb_prices = spark.read.format("mongo").option("uri", mongo_uri).load()
 df_mdb_prices = df_mdb_prices.select(
     col("_id"),
@@ -92,7 +96,6 @@ df_mdb_prices = df_mdb_prices.select(
     col("original"))
 df_mdb_prices = df_mdb_prices.toPandas()
 
-mongo_uri = "mongodb://172.16.36.13:27017/lokakarya.options"
 df_mdb_options = spark.read.format("mongo").option("uri", mongo_uri).load()
 df_mdb_options = df_mdb_options.select(
     col("_id"),
@@ -102,7 +105,6 @@ df_mdb_options = df_mdb_options.select(
     col("default"))
 df_mdb_options = df_mdb_options.toPandas()
 
-mongo_uri = "mongodb://172.16.36.13:27017/lokakarya.product_types"
 df_mdb_product_types = spark.read.format("mongo").option("uri", mongo_uri).load()
 df_mdb_product_types = df_mdb_product_types.select(
     col("_id"),
@@ -116,7 +118,6 @@ df_mdb_product_types = df_mdb_product_types.select(
     col("updated"))
 df_mdb_product_types = df_mdb_product_types.toPandas()
 
-mongo_uri = "mongodb://172.16.36.13:27017/lokakarya.products"
 df_mdb_products = spark.read.format("mongo").option("uri", mongo_uri).load()
 df_mdb_products = df_mdb_products.select(
     col("_id"),
