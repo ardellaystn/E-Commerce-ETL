@@ -12,12 +12,12 @@ jdbc_properties_postgres = {
     "driver": "org.postgresql.Driver"
 }
 
-mongo_uri_dimesions = "mongodb://172.16.36.13:27017/lokakarya.dimensions"
-mongo_uri_images = "mongodb://172.16.36.13:27017/lokakarya.images"
-mongo_uri_prices = "mongodb://172.16.36.13:27017/lokakarya.prices"
-mongo_uri_options = "mongodb://172.16.36.13:27017/lokakarya.options"
 mongo_uri_product_types = "mongodb://172.16.36.13:27017/lokakarya.product_types"
 mongo_uri_products = "mongodb://172.16.36.13:27017/lokakarya.products"
+mongo_uri_prices = "mongodb://172.16.36.13:27017/lokakarya.prices"
+mongo_uri_dimesions = "mongodb://172.16.36.13:27017/lokakarya.dimensions"
+mongo_uri_images = "mongodb://172.16.36.13:27017/lokakarya.images"
+mongo_uri_options = "mongodb://172.16.36.13:27017/lokakarya.options"
 
 # Database Postgresql dan file XLSX
 df_pg_users = spark.read.jdbc(url=jdbc_url_postgres, table="users", properties=jdbc_properties_postgres)
@@ -48,6 +48,11 @@ df_xl_physical_addresses['is_shipping'] = df_xl_physical_addresses['is_shipping'
 df_xl_physical_addresses['is_warehouse'] = df_xl_physical_addresses['is_warehouse'].astype(bool)
 df_combined_physical_addresses = pd.concat([df_pg_physical_addresses_pd, df_xl_physical_addresses], axis=0, ignore_index=True)
 
+df_pg_source = spark.read.jdbc(url=jdbc_url_postgres, table="source", properties=jdbc_properties_postgres)
+df_pg_source_pd = df_pg_source.toPandas()
+df_xl_source = pd.read_excel("C:\\Users\\pc\\OneDrive\\Documents\\Ardella File\\Training DBA\\Connect mongo ke vscode\\full_generated_data1 (2).xlsx", sheet_name="source")
+df_combined_source = pd.concat([df_pg_source_pd, df_xl_source], axis=0, ignore_index=True)
+
 df_pg_orders = spark.read.jdbc(url=jdbc_url_postgres, table="orders", properties=jdbc_properties_postgres)
 df_pg_orders_pd = df_pg_orders.toPandas()
 df_xl_orders = pd.read_excel("C:\\Users\\pc\\OneDrive\\Documents\\Ardella File\\Training DBA\\Connect mongo ke vscode\\full_generated_data1 (2).xlsx", sheet_name="orders")
@@ -64,48 +69,8 @@ df_pg_cart_items_pd = df_pg_cart_items.toPandas()
 df_xl_cart_items = pd.read_excel("C:\\Users\\pc\\OneDrive\\Documents\\Ardella File\\Training DBA\\Connect mongo ke vscode\\full_generated_data1 (2).xlsx", sheet_name="cart_items")
 df_combined_cart_items = pd.concat([df_pg_cart_items_pd, df_xl_cart_items], axis=0, ignore_index=True)
 
-df_pg_source = spark.read.jdbc(url=jdbc_url_postgres, table="source", properties=jdbc_properties_postgres)
-df_pg_source_pd = df_pg_source.toPandas()
-df_xl_source = pd.read_excel("C:\\Users\\pc\\OneDrive\\Documents\\Ardella File\\Training DBA\\Connect mongo ke vscode\\full_generated_data1 (2).xlsx", sheet_name="source")
-df_combined_source = pd.concat([df_pg_source_pd, df_xl_source], axis=0, ignore_index=True)
-
 # Dokumen Database (MongoDB)
-df_mdb_dimensions = spark.read.format("mongo").option("uri", mongo_uri).load()
-df_mdb_dimensions = df_mdb_dimensions.select(
-    col("_id"),
-    col("height"),
-    col("length"),
-    col("unit"),
-    col("width"))
-df_mdb_dimensions = df_mdb_dimensions.toPandas()
-
-df_mdb_images = spark.read.format("mongo").option("uri", mongo_uri).load()
-df_mdb_images = df_mdb_images.select(
-    col("_id"),
-    col("label"),
-    col("source"))
-df_mdb_images = df_mdb_images.toPandas()
-
-df_mdb_prices = spark.read.format("mongo").option("uri", mongo_uri).load()
-df_mdb_prices = df_mdb_prices.select(
-    col("_id"),
-    col("bulk_discount"),
-    col("currency"),
-    col("discount"),
-    col("discount_quantity"),
-    col("original"))
-df_mdb_prices = df_mdb_prices.toPandas()
-
-df_mdb_options = spark.read.format("mongo").option("uri", mongo_uri).load()
-df_mdb_options = df_mdb_options.select(
-    col("_id"),
-    col("type"),
-    col("label"),
-    col("price._id").alias ("price_id"),
-    col("default"))
-df_mdb_options = df_mdb_options.toPandas()
-
-df_mdb_product_types = spark.read.format("mongo").option("uri", mongo_uri).load()
+df_mdb_product_types = spark.read.format("mongo").option("uri", mongo_uri_product_types).load()
 df_mdb_product_types = df_mdb_product_types.select(
     col("_id"),
     col("available"), 
@@ -118,7 +83,7 @@ df_mdb_product_types = df_mdb_product_types.select(
     col("updated"))
 df_mdb_product_types = df_mdb_product_types.toPandas()
 
-df_mdb_products = spark.read.format("mongo").option("uri", mongo_uri).load()
+df_mdb_products = spark.read.format("mongo").option("uri", mongo_uri_products).load()
 df_mdb_products = df_mdb_products.select(
     col("_id"),
     col("category"),
@@ -127,3 +92,38 @@ df_mdb_products = df_mdb_products.select(
     col("product_types"),
     col("title"))
 df_mdb_products = df_mdb_products.toPandas()
+
+df_mdb_prices = spark.read.format("mongo").option("uri", mongo_uri_prices).load()
+df_mdb_prices = df_mdb_prices.select(
+    col("_id"),
+    col("bulk_discount"),
+    col("currency"),
+    col("discount"),
+    col("discount_quantity"),
+    col("original"))
+df_mdb_prices = df_mdb_prices.toPandas()
+
+df_mdb_dimensions = spark.read.format("mongo").option("uri", mongo_uri_dimesions).load()
+df_mdb_dimensions = df_mdb_dimensions.select(
+    col("_id"),
+    col("height"),
+    col("length"),
+    col("unit"),
+    col("width"))
+df_mdb_dimensions = df_mdb_dimensions.toPandas()
+
+df_mdb_images = spark.read.format("mongo").option("uri", mongo_uri_images).load()
+df_mdb_images = df_mdb_images.select(
+    col("_id"),
+    col("label"),
+    col("source"))
+df_mdb_images = df_mdb_images.toPandas()
+
+df_mdb_options = spark.read.format("mongo").option("uri", mongo_uri_options).load()
+df_mdb_options = df_mdb_options.select(
+    col("_id"),
+    col("type"),
+    col("label"),
+    col("price._id").alias ("price_id"),
+    col("default"))
+df_mdb_options = df_mdb_options.toPandas()
