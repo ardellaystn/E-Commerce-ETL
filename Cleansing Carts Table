@@ -1,0 +1,84 @@
+# CARTS
+# Cek data null
+print("Jumlah data null:")
+print(df_combined_carts.isna().sum())
+
+def generate_id_carts(existing_ids, prefix="CA"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    if valid_ids:
+        max_id = max([int(x) for x in valid_ids])
+    else:
+        max_id = 0
+    new_cart_id = f"{prefix}{max_id + 1}"
+    return new_cart_id
+existing_ids = set(df_combined_carts['id'].dropna().tolist())
+null_ids = df_combined_carts[df_combined_carts['id'].isna()]
+for idx, row in null_ids.iterrows():
+    new_cart_id = generate_id_carts(existing_ids)
+    df_combined_carts.at[idx, 'id'] = new_cart_id
+    existing_ids.add(new_cart_id)
+
+modus_carts_status = df_combined_carts['status'].mode()[0]
+df_combined_carts['status'] = df_combined_carts['status'].fillna(modus_carts_status)
+
+df_combined_carts['created_at'] = df_combined_carts['created_at'].fillna(pd.Timestamp.today())
+df_combined_carts['expires'] = df_combined_carts['expires'].fillna(pd.Timestamp.today())
+
+print("Jumlah data null setelah penanganan:")
+print(df_combined_carts.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_combined_carts.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_combined_carts['id'].duplicated().any())
+print("Data yang memiliki ID duplikat:")
+duplicate_rows_carts = df_combined_carts[df_combined_carts.duplicated(subset=['id'], keep=False)]
+print(duplicate_rows_carts)
+
+def generate_id_carts(existing_ids, prefix="CA"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    max_id = max([int(x) for x in valid_ids], default=0)
+    new_id = f"{prefix}{max_id + 1}"
+    return new_id
+existing_ids = set(df_combined_carts['id'].tolist())
+duplicate_ids = df_combined_carts['id'][df_combined_carts['id'].duplicated()].tolist()
+for duplicate_id in duplicate_ids:
+    duplicate_indices = df_combined_carts.index[df_combined_carts['id'] == duplicate_id].tolist()
+    for idx in duplicate_indices[1:]:
+        new_id = generate_id_carts(existing_ids)
+        df_combined_carts.at[idx, 'id'] = new_id
+        existing_ids.add(new_id)
+
+print("Apakah terdapat kolom ID duplikat setelah penanganan:")
+print(df_combined_carts['id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel Carts sebelum penanganan:")
+print(df_combined_carts.dtypes)
+
+def correct_id_carts(value):
+    return bool(re.match(r"^CA\d{4}$", str(value)))
+invalid_ids = df_combined_carts[~df_combined_carts['id'].apply(correct_id_carts)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['id']])
+
+valid_statuses = ['Completed', 'Cancelled', 'Pending']
+modus_carts_status = df_combined_carts['status'].mode()[0]
+df_combined_carts.loc[~df_combined_carts['status'].isin(valid_statuses) | 
+                      df_combined_carts['status'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 
+                      'status'] = modus_carts_status
+invalid_statuses = df_combined_carts[~df_combined_carts['status'].isin(valid_statuses) | 
+                                 df_combined_carts['status'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah status yang tidak konsisten: {invalid_statuses.shape[0]}")
+print(invalid_statuses[['status']])
+
+df_combined_carts['created_at'] = pd.to_datetime(df_combined_carts['created_at'], errors='coerce')
+invalid_created_at = df_combined_carts[df_combined_carts['created_at'].isna()]
+print(f"Jumlah created_at yang tidak konsisten: {invalid_created_at.shape[0]}")
+print(invalid_created_at[['created_at']])
+
+df_combined_carts['expires'] = pd.to_datetime(df_combined_carts['expires'], errors='coerce')
+invalid_expires = df_combined_carts[df_combined_carts['expires'].isna()]
+print(f"Jumlah nilai expires yang tidak konsisten: {invalid_expires.shape[0]}")
+print(invalid_expires[['expires']])
