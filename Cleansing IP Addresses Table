@@ -1,0 +1,61 @@
+# IP_ADDRESSES
+# Cek data null
+print("Jumlah data null:")
+print(df_combined_ip_addresses.isnull().sum())
+df_combined_ip_addresses['ip1'] = df_combined_ip_addresses['ip1'].fillna(0)
+df_combined_ip_addresses['ip2'] = df_combined_ip_addresses['ip2'].fillna(0)
+df_combined_ip_addresses['ip3'] = df_combined_ip_addresses['ip3'].fillna(0)
+df_combined_ip_addresses['ip4'] = df_combined_ip_addresses['ip4'].fillna(0)
+df_combined_ip_addresses['last_used'] = df_combined_ip_addresses['last_used'].fillna(pd.Timestamp.today())
+print("Jumlah data null setelah penanganan:")
+print(df_combined_ip_addresses.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_combined_ip_addresses.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_combined_ip_addresses['id'].duplicated().any())
+print("Data yang memiliki ID duplikat:")
+duplicate_rows_ip_addresses = df_combined_ip_addresses[df_combined_ip_addresses.duplicated(subset=['id'], keep=False)]
+print(duplicate_rows_ip_addresses)
+
+def generate_id_address(existing_ids, prefix="IP"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    max_id = max([int(x) for x in valid_ids], default=0)
+    new_id = f"{prefix}{max_id + 1}"
+    return new_id
+existing_ids = set(df_combined_ip_addresses['id'].tolist())
+duplicate_ids = df_combined_ip_addresses['id'][df_combined_ip_addresses['id'].duplicated()].tolist()
+for duplicate_id in duplicate_ids:
+    duplicate_indices = df_combined_ip_addresses.index[df_combined_ip_addresses['id'] == duplicate_id].tolist()
+    for idx in duplicate_indices[1:]:
+        new_id = generate_id_address(existing_ids)
+        df_combined_ip_addresses.at[idx, 'id'] = new_id
+        existing_ids.add(new_id)
+        
+print("Apakah terdapat kolom ID duplikat setelah penanganan:")
+print(df_combined_ip_addresses['id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel IP Addresses sebelum penanganan:")
+print(df_combined_ip_addresses.dtypes)
+
+def correct_id_address(value):
+    return bool(re.match(r"^IP\d{4}$", str(value)))
+invalid_ids = df_combined_ip_addresses[~df_combined_ip_addresses['id'].apply(correct_id_address)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['id']])
+
+df_combined_ip_addresses[['ip1', 'ip2', 'ip3', 'ip4']] = df_combined_ip_addresses[['ip1', 'ip2', 'ip3', 'ip4']].astype(int)
+def correct_ip_format(value):
+    return 0 <= value <= 255
+invalid_ips = df_combined_ip_addresses[
+    ~df_combined_ip_addresses.apply(lambda x: correct_ip_format(x['ip1']) and correct_ip_format(x['ip2']) and correct_ip_format(x['ip3']) and correct_ip_format(x['ip4']), axis=1)
+]
+print(f"Jumlah IP yang tidak konsisten: {invalid_ips.shape[0]}")
+print(invalid_ips[['ip1', 'ip2', 'ip3', 'ip4']])
+
+df_combined_ip_addresses['last_used'] = pd.to_datetime(df_combined_ip_addresses['last_used'], errors='coerce')
+invalid_last_used = df_combined_ip_addresses[df_combined_ip_addresses['last_used']==pd.NaT]
+print(f"Jumlah last_used yang tidak konsisten: {invalid_last_used.shape[0]}")
+print(invalid_last_used[['last_used']])
