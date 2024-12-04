@@ -1,0 +1,93 @@
+# USERS
+# Cek data null
+print("Jumlah data null:")
+print(df_combined_users.isnull().sum())
+
+df_combined_users = df_combined_users.fillna({'fname': 'Unknown', 'lname': 'Unknown', 'nickname' : 'Unknown', 'email' : 'Unknown'})
+
+def generate_password_id(existing_ids, prefix="PW"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    if valid_ids:
+        max_id = max([int(x) for x in valid_ids])
+    else:
+        max_id = 0
+    new_password_id = f"{prefix}{max_id + 1}"
+    return new_password_id
+existing_ids = set(df_combined_users['password_id'].dropna().tolist())
+null_ids = df_combined_users[df_combined_users['password_id'].isna()]
+for idx, row in null_ids.iterrows():
+    new_password_id = generate_password_id(existing_ids)
+    df_combined_users.at[idx, 'password_id'] = new_password_id
+    existing_ids.add(new_password_id)
+
+df_combined_users['created_at'] = df_combined_users['created_at'].fillna(pd.Timestamp.today())
+
+print("Jumlah data null setelah penanganan:")
+print(df_combined_users.isna().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_combined_users.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_combined_users['id'].duplicated().any())
+print("Data yang memiliki ID duplikat:")
+duplicate_rows_users = df_combined_users[df_combined_users.duplicated(subset=['id'], keep=False)]
+print(duplicate_rows_users)
+
+def generate_id_user(existing_ids, prefix="USR"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    max_id = max([int(x) for x in valid_ids], default=0)
+    new_id = f"{prefix}{max_id + 1}"
+    return new_id
+existing_ids = set(df_combined_users['id'].tolist())
+duplicate_ids = df_combined_users['id'][df_combined_users['id'].duplicated()].tolist()
+for duplicate_id in duplicate_ids:
+    duplicate_indices = df_combined_users.index[df_combined_users['id'] == duplicate_id].tolist()
+    for idx in duplicate_indices[1:]:
+        new_id = generate_id_user(existing_ids)
+        df_combined_users.at[idx, 'id'] = new_id
+        existing_ids.add(new_id)
+
+print("Apakah terdapat kolom ID duplikat setelah penanganan:")
+print(df_combined_users['id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel Users sebelum penanganan:")
+print(df_combined_users.dtypes)
+
+def correct_id_user(value):
+    return bool(re.match(r"^USR\d{4}$", str(value)))
+invalid_ids = df_combined_users[~df_combined_users['id'].apply(correct_id_user)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['id']])
+
+df_combined_users.loc[df_combined_users['fname'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'fname'] = 'Unknown'
+invalid_fname = df_combined_users[ df_combined_users['fname'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah fname yang tidak konsisten: {invalid_fname.shape[0]}")
+print(invalid_fname[['fname']])
+
+df_combined_users.loc[df_combined_users['lname'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'lname'] = 'Unknown'
+invalid_lname = df_combined_users[ df_combined_users['lname'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah lname yang tidak konsisten: {invalid_lname.shape[0]}")
+print(invalid_lname[['lname']])
+
+df_combined_users.loc[df_combined_users['email'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'email'] = 'Unknown'
+invalid_email = df_combined_users[ df_combined_users['email'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah email yang tidak konsisten: {invalid_email.shape[0]}")
+print(invalid_email[['email']])
+
+def correct_password_id(value):
+    return bool(re.match(r"^PW\d{4}$", str(value)))
+invalid_ids = df_combined_users[~df_combined_users['password_id'].apply(correct_password_id)]
+print(f"Jumlah Password ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['password_id']])
+
+df_combined_users['created_at'] = pd.to_datetime(df_combined_users['created_at'], errors='coerce')
+invalid_created_at = df_combined_users[df_combined_users['created_at'].isna()]
+print(f"Jumlah nilai created_at yang tidak konsisten: {invalid_created_at.shape[0]}")
+
+def correct_ip_address_id(value):
+    return bool(re.match(r"^IP\d{4}$", str(value)))
+invalid_ids = df_combined_users[~df_combined_users['ip_address_id'].apply(correct_ip_address_id)]
+print(f"Jumlah IP Address ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['ip_address_id']])
