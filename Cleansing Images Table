@@ -1,0 +1,29 @@
+# IMAGES
+# Cek data null
+print("Jumlah data null:")
+print(df_mdb_images.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_mdb_images.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_mdb_images['_id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel Images sebelum penanganan:")
+print(df_mdb_images.dtypes)
+
+def correct_id_images(value):
+    return bool(re.match(r"^IMG\d{4}$", str(value)))
+invalid_ids = df_mdb_images[~df_mdb_images['_id'].apply(correct_id_images)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['_id']])
+
+df_mdb_images.loc[df_mdb_images['source'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'source'] =  'Unknown'
+invalid_source = df_mdb_images[ df_mdb_images['source'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah source yang tidak konsisten: {invalid_source.shape[0]}")
+
+modus_label = df_mdb_images['label'].mode()[0]
+df_mdb_images.loc[df_mdb_images['label'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'label'] =  modus_label
+invalid_label = df_mdb_images[ df_mdb_images['label'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah label yang tidak konsisten: {invalid_label.shape[0]}")
