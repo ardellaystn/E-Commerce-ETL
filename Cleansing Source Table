@@ -1,0 +1,45 @@
+# SOURCE
+# Cek data null
+print("Jumlah data null:")
+print(df_combined_source.isnull().sum())
+
+def generate_id_source(existing_ids, prefix="CA"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    if valid_ids:
+        max_id = max([int(x) for x in valid_ids])
+    else:
+        max_id = 0
+    new_source_id = f"{prefix}{max_id + 1}"
+    return new_source_id
+existing_ids = set(df_combined_carts['id'].dropna().tolist())
+null_ids = df_combined_carts[df_combined_carts['id'].isna()]
+for idx, row in null_ids.iterrows():
+    new_source_id = generate_id_source(existing_ids)
+    df_combined_carts.at[idx, 'id'] = new_source_id
+    existing_ids.add(new_source_id)
+
+print("Jumlah data null setelah penanganan:")
+print(df_combined_source.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_combined_source.duplicated().any())
+print("Data yang memiliki ID duplikat:")
+duplicate_rows_source = df_combined_source[df_combined_source.duplicated(subset=['id'], keep=False)]
+print(duplicate_rows_source)
+
+df_combined_source = df_combined_source.drop_duplicates(subset='id', keep='first')
+
+print("Apakah terdapat kolom ID duplikat setelah penanganan:")
+print(df_combined_source.duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel Source sebelum penanganan:")
+print(df_combined_source.dtypes)
+
+def correct_id_source(value):
+    return bool(re.match(r"^SRC\d{4}$", str(value)))
+invalid_ids = df_combined_source[~df_combined_source['id'].apply(correct_id_source)]
+
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['id']])
