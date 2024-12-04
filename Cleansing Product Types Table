@@ -1,0 +1,59 @@
+# PRODUCT_TYPES
+# Cek data null
+print("Jumlah data null:")
+print(df_mdb_product_types.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_mdb_product_types.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_mdb_product_types['_id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel IP Addresses sebelum penanganan:")
+print(df_mdb_product_types.dtypes)
+
+def correct_id_protypes(value):
+    return bool(re.match(r"^PSKU\d{4}$", str(value)))
+invalid_ids = df_mdb_product_types[~df_mdb_product_types['_id'].apply(correct_id_protypes)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['_id']])
+
+df_mdb_product_types.loc[df_mdb_product_types['description'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'description'] = 'Unknown'
+invalid_description = df_mdb_product_types[ df_mdb_product_types['description'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah description yang tidak konsisten: {invalid_description.shape[0]}")
+
+mean_stock = df_mdb_product_types['stock'].mean()
+df_mdb_product_types['stock'] = df_mdb_product_types['stock'].replace(['', '.', ' '], mean_stock)
+invalid_stock = df_mdb_product_types[df_mdb_product_types['stock'].isin(['', '.', ' '])]
+print(f"Jumlah bulk_discount yang tidak konsisten: {invalid_stock}")
+
+def correct_id_prices(value):
+    return bool(re.match(r"^PR\d{4}$", str(value)))
+invalid_ids = df_mdb_product_types[~df_mdb_product_types['price_id'].apply(correct_id_prices)]
+print(f"Jumlah Price ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['price_id']])
+
+def correct_id_dimensions(value):
+    return bool(re.match(r"^DM\d{4}$", str(value)))
+invalid_ids = df_mdb_product_types[~df_mdb_product_types['dimensions_id'].apply(correct_id_dimensions)]
+print(f"Jumlah Dimensions ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['dimensions_id']])
+
+def correct_id_images(value):
+    return bool(re.match(r"^IMG\d{4}$", str(value)))
+invalid_ids = df_mdb_product_types[~df_mdb_product_types['images_id'].apply(correct_id_images)]
+print(f"Jumlah Images ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['images_id']])
+
+df_mdb_product_types['created'] = pd.to_datetime(df_mdb_product_types['created'], errors='coerce')
+df_mdb_product_types['updated'] = pd.to_datetime(df_mdb_product_types['updated'], errors='coerce')
+
+df_mdb_product_types['created'] = df_mdb_product_types['created'].replace(['', '.', ' '], pd.Timestamp.today())
+df_mdb_product_types['updated'] = df_mdb_product_types['updated'].replace(['', '.', ' '], pd.Timestamp.today())
+
+invalid_created = df_mdb_product_types[df_mdb_product_types['created'].isin(['', '.', ' '])]
+invalid_updated = df_mdb_product_types[df_mdb_product_types['updated'].isin(['', '.', ' '])]
+
+print(f"Jumlah created yang tidak konsisten: {invalid_created.shape[0]}")
+print(f"Jumlah updated yang tidak konsisten: {invalid_updated.shape[0]}")
