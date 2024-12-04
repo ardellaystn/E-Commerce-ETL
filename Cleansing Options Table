@@ -1,0 +1,40 @@
+# OPTIONS
+# Cek data null
+print("Jumlah data null:")
+print(df_mdb_options.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_mdb_options.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_mdb_options['_id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel IP Addresses sebelum penanganan:")
+print(df_mdb_options.dtypes)
+
+def correct_id_options(value):
+    return bool(re.match(r"^OP\d{4}$", str(value)))
+invalid_ids = df_mdb_options[~df_mdb_options['_id'].apply(correct_id_options)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['_id']])
+
+df_mdb_options.loc[df_mdb_options['type'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'type'] =  'Unknown'
+invalid_type = df_mdb_options[ df_mdb_options['type'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah type yang tidak konsisten: {invalid_type.shape[0]}")
+
+df_mdb_options.loc[df_mdb_options['label'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'label'] =  'Unknown'
+invalid_label = df_mdb_options[ df_mdb_options['label'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah label yang tidak konsisten: {invalid_label.shape[0]}")
+
+def correct_id_format(value):
+    return bool(re.match(r"^PR\d{4}$", str(value)))
+invalid_ids = df_mdb_options[~df_mdb_options['price_id'].apply(correct_id_format)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['price_id']])
+
+modus_default = df_mdb_options['default'].mode()[0]
+df_mdb_options['default'] = df_mdb_options['default'].replace(['', '.', ' '], modus_default).astype(bool)
+invalid_default = df_mdb_options[df_mdb_options['default'].isin(['', '.', ' '])]
+print(f"Jumlah default yang tidak konsisten: {invalid_default}")
+df_mdb_options.shape
