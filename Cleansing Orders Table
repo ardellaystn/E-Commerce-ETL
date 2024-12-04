@@ -1,0 +1,94 @@
+# ORDERS
+# Cek data null
+print("Jumlah data null:")
+print(df_combined_orders.isna().sum())
+
+def generate_user_id(existing_ids, prefix="USR"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    if valid_ids:
+        max_id = max([int(x) for x in valid_ids])
+    else:
+        max_id = 0
+    new_user_id = f"{prefix}{max_id + 1}"
+    return new_user_id
+existing_ids = set(df_combined_orders['user_id'].dropna().tolist())
+null_ids = df_combined_orders[df_combined_orders['user_id'].isna()]
+for idx, row in null_ids.iterrows():
+    new_user_id = generate_user_id(existing_ids)
+    df_combined_orders.at[idx, 'user_id'] = new_user_id
+    existing_ids.add(new_user_id)
+
+df_combined_orders['created_at'] = df_combined_orders['created_at'].fillna(pd.Timestamp.today())
+
+df_combined_orders['cost'] = df_combined_orders['cost'].astype(float)
+df_combined_orders['tax'] = df_combined_orders['tax'].astype(float)
+df_combined_orders['total'] = df_combined_orders['total'].astype(float)
+
+mean_cost = df_combined_orders['cost'].mean()
+mean_tax = df_combined_orders['tax'].mean()
+mean_total = df_combined_orders['total'].mean()
+
+df_combined_orders['cost'] = df_combined_orders['cost'].fillna(mean_cost)
+df_combined_orders['tax'] = df_combined_orders['tax'].fillna(mean_tax)
+df_combined_orders['total'] = df_combined_orders['total'].fillna(mean_total)
+
+print("Jumlah data null setelah penanganan:")
+print(df_combined_orders.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_combined_orders.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_combined_orders['id'].duplicated().any())
+print("Data yang memiliki ID duplikat:")
+duplicate_rows_orders= df_combined_orders[df_combined_orders.duplicated(subset=['id'], keep=False)]
+print(duplicate_rows_orders)
+
+def generate_id_order(existing_ids, prefix="OD"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    max_id = max([int(x) for x in valid_ids], default=0)
+    new_id = f"{prefix}{max_id + 1}"
+    return new_id
+existing_ids = set(df_combined_orders['id'].tolist())
+duplicate_ids = df_combined_orders['id'][df_combined_orders['id'].duplicated()].tolist()
+for duplicate_id in duplicate_ids:
+    duplicate_indices = df_combined_orders.index[df_combined_orders['id'] == duplicate_id].tolist()
+    for idx in duplicate_indices[1:]:
+        new_id = generate_id_order(existing_ids)
+        df_combined_orders.at[idx, 'id'] = new_id
+        existing_ids.add(new_id)
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel Orders sebelum penanganan:")
+print(df_combined_orders.dtypes)
+
+def correct_id_order(value):
+    return bool(re.match(r"^OD\d{4}$", str(value)))
+invalid_ids = df_combined_orders[~df_combined_orders['id'].apply(correct_id_order)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['id']])
+
+def correct_user_id(value):
+    return bool(re.match(r"^USR\d{4}$", str(value)))
+invalid_ids = df_combined_orders[~df_combined_orders['user_id'].apply(correct_user_id)]
+print(f"Jumlah User ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['user_id']])
+
+df_combined_orders['created_at'] = pd.to_datetime(df_combined_orders['created_at'], errors='coerce')
+invalid_created_at = df_combined_orders[df_combined_orders['created_at'].isna()]
+print(f"Jumlah nilai 'created_at' yang tidak konsisten: {invalid_created_at.shape[0]}")
+
+df_combined_orders['cost'] = pd.to_numeric(df_combined_orders['cost'], errors='coerce')
+df_combined_orders['tax'] = pd.to_numeric(df_combined_orders['tax'], errors='coerce')
+df_combined_orders['total'] = pd.to_numeric(df_combined_orders['total'], errors='coerce')
+
+def correct_carts_id(value):
+    return bool(re.match(r"^CA\d{4}$", str(value)))
+invalid_ids = df_combined_orders[~df_combined_orders['carts_id'].apply(correct_carts_id)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['carts_id']])
+
+df_combined_orders.loc[df_combined_orders['currency'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'currency'] = 'Unknown'
+invalid_currency = df_combined_orders[ df_combined_orders['currency'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah currency yang tidak konsisten: {invalid_currency.shape[0]}")
+print(invalid_currency[['currency']])
