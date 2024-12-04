@@ -1,0 +1,116 @@
+# PHYSICAL_ADDRESSES
+# Cek data null
+print("Jumlah data null:")
+print(df_combined_physical_addresses.isna().sum())
+
+modus_directional = df_combined_physical_addresses['directional'].mode()[0]
+df_combined_physical_addresses['directional'] = df_combined_physical_addresses['directional'].fillna(modus_directional)
+
+df_combined_physical_addresses['street'] = df_combined_physical_addresses['street'].fillna('Unknown')
+
+modus_suffix = df_combined_physical_addresses['suffix'].mode()[0]
+df_combined_physical_addresses['suffix'] = df_combined_physical_addresses['suffix'].fillna(modus_suffix)
+
+modus_unit_type = df_combined_physical_addresses['unit_type'].mode()[0]
+df_combined_physical_addresses['unit_type'] = df_combined_physical_addresses['unit_type'].fillna(modus_unit_type)
+
+df_combined_physical_addresses['unit_number'] = df_combined_physical_addresses['unit_number'].fillna(0)
+
+df_combined_physical_addresses['country_code'] = df_combined_physical_addresses['country_code'].fillna('Unknown')
+
+print("Jumlah data null setelah penanganan:")
+print(df_combined_physical_addresses.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_combined_physical_addresses.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_combined_physical_addresses['id'].duplicated().any())
+print("Data yang memiliki ID duplikat:")
+duplicate_rows_physical_addresses = df_combined_physical_addresses[df_combined_physical_addresses.duplicated(subset=['id'], keep=False)]
+print(duplicate_rows_physical_addresses)
+
+def generate_id_physical_address(existing_ids, prefix="PA"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    max_id = max([int(x) for x in valid_ids], default=0)
+    new_id = f"{prefix}{max_id + 1}"
+    return new_id
+existing_ids = set(df_combined_physical_addresses['id'].tolist())
+duplicate_ids = df_combined_physical_addresses['id'][df_combined_physical_addresses['id'].duplicated()].tolist()
+for duplicate_id in duplicate_ids:
+    duplicate_indices = df_combined_physical_addresses.index[df_combined_physical_addresses['id'] == duplicate_id].tolist()
+    for idx in duplicate_indices[1:]:
+        new_id = generate_id_physical_address(existing_ids)
+        df_combined_physical_addresses.at[idx, 'id'] = new_id
+        existing_ids.add(new_id)
+        
+print("Apakah terdapat kolom ID duplikat setelah penanganan:")
+print(df_combined_physical_addresses['id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel Physical Addresses sebelum penanganan:")
+print(df_combined_physical_addresses.dtypes)
+
+def correct_id_physical_address(value):
+    return bool(re.match(r"^PA\d{4}$", str(value)))
+invalid_ids = df_combined_physical_addresses[~df_combined_physical_addresses['id'].apply(correct_id_physical_address)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['id']])
+
+def correct_user_id(value):
+    return bool(re.match(r"^USR\d{4}$", str(value)))
+invalid_ids = df_combined_physical_addresses[~df_combined_physical_addresses['user_id'].apply(correct_user_id)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['user_id']])
+
+def correct_source_id(value):
+    return bool(re.match(r"^SRC\d{4}$", str(value)))
+invalid_ids = df_combined_physical_addresses[~df_combined_physical_addresses['source_id'].apply(correct_source_id)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['source_id']])
+
+df_combined_physical_addresses.loc[df_combined_physical_addresses['street_number'].str.contains(r'[\s\.,;:]+', regex=True, na=False),'street_number'] = 0
+df_combined_physical_addresses['street_number'] = pd.to_numeric(df_combined_physical_addresses['street_number'], errors='coerce').fillna(0).astype(int)
+invalid_street_number = df_combined_physical_addresses[df_combined_physical_addresses['street_number'] == 0]
+print(f"Jumlah street_number yang tidak konsisten: {invalid_street_number.shape[0]}")
+print(invalid_street_number[['street_number']])
+
+df_combined_physical_addresses.loc[df_combined_physical_addresses['street'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'street'] = 'Unknown'
+invalid_street = df_combined_physical_addresses[ df_combined_physical_addresses['street'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah street yang tidak konsisten: {invalid_street.shape[0]}")
+print(invalid_street[['street']])
+
+modus_directional = df_combined_physical_addresses['directional'].mode()[0]
+modus_suffix = df_combined_physical_addresses['suffix'].mode()[0]
+modus_unit_type = df_combined_physical_addresses['unit_type'].mode()[0]
+
+df_combined_physical_addresses.loc[df_combined_physical_addresses['directional'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'directional'] = modus_directional
+invalid_directional = df_combined_physical_addresses[ df_combined_physical_addresses['directional'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah directional yang tidak konsisten: {invalid_directional.shape[0]}")
+print(invalid_directional[['directional']])
+
+df_combined_physical_addresses.loc[df_combined_physical_addresses['suffix'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'suffix'] = modus_suffix
+invalid_suffix = df_combined_physical_addresses[ df_combined_physical_addresses['suffix'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah suffix yang tidak konsisten: {invalid_suffix.shape[0]}")
+print(invalid_suffix[['suffix']])
+
+df_combined_physical_addresses.loc[df_combined_physical_addresses['unit_type'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'unit_type'] = modus_unit_type
+invalid_unit_type = df_combined_physical_addresses[ df_combined_physical_addresses['unit_type'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah unit_type yang tidak konsisten: {invalid_unit_type.shape[0]}")
+print(invalid_unit_type[['unit_type']])
+
+df_combined_physical_addresses['unit_number'] = pd.to_numeric(df_combined_physical_addresses['unit_number'], errors='coerce').fillna(0).astype(int)
+invalid_unit_number = df_combined_physical_addresses[df_combined_physical_addresses['unit_number'] == 0]
+print(f"Jumlah unit_number yang tidak konsisten: {invalid_unit_number.shape[0]}")
+print(invalid_unit_number[['unit_number']])
+
+df_combined_physical_addresses.loc[df_combined_physical_addresses['zip_code'].str.contains(r'[\s\.,;:]+', regex=True, na=False),'zip_code'] = 0
+df_combined_physical_addresses['zip_code'] = pd.to_numeric(df_combined_physical_addresses['zip_code'], errors='coerce').fillna(0).astype(int)
+invalid_zip_code = df_combined_physical_addresses[df_combined_physical_addresses['zip_code'] == 0]
+print(f"Jumlah zip_code yang tidak konsisten: {invalid_zip_code.shape[0]}")
+print(invalid_zip_code[['zip_code']])
+
+df_combined_physical_addresses.loc[df_combined_physical_addresses['country_code'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'country_code'] = 'Unknown'
+invalid_country_code = df_combined_physical_addresses[ df_combined_physical_addresses['country_code'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah country_code yang tidak konsisten: {invalid_country_code.shape[0]}")
+print(invalid_country_code[['country_code']])
