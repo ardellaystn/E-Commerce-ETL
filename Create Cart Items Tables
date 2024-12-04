@@ -1,0 +1,83 @@
+# CART_ITEMS
+# Cek data null
+print("Jumlah data null:")
+print(df_combined_cart_items.isna().sum())
+
+mean_quantity = df_combined_cart_items['quantity'].mean()
+mean_discount = df_combined_cart_items['discount'].mean()
+df_combined_cart_items['quantity'] = df_combined_cart_items['quantity'].fillna(mean_quantity)
+df_combined_cart_items['discount'] = df_combined_cart_items['discount'].fillna(mean_discount)
+
+df_combined_cart_items['price'] = pd.to_numeric(df_combined_cart_items['price'], errors='coerce')
+mean_price = df_combined_cart_items['price'].mean()
+df_combined_cart_items['price'] = df_combined_cart_items['price'].fillna(mean_price)
+
+def generate_carts_id(existing_ids, prefix="CA"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    if valid_ids:
+        max_id = max([int(x) for x in valid_ids])
+    else:
+        max_id = 0
+    new_cart_id = f"{prefix}{max_id + 1}"
+    return new_cart_id
+existing_ids = set(df_combined_cart_items['carts_id'].dropna().tolist())
+null_ids = df_combined_cart_items[df_combined_cart_items['carts_id'].isna()]
+for idx, row in null_ids.iterrows():
+    new_cart_id = generate_carts_id(existing_ids)
+    df_combined_cart_items.at[idx, 'carts_id'] = new_cart_id
+    existing_ids.add(new_cart_id)
+
+print("Jumlah data null setelah penanganan:")
+print(df_combined_cart_items.isna().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_combined_cart_items.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_combined_cart_items['id'].duplicated().any())
+print("Data yang memiliki ID duplikat:")
+duplicate_rows_cart_items = df_combined_cart_items[df_combined_cart_items.duplicated(subset=['id'], keep=False)]
+print(duplicate_rows_cart_items)
+
+def generate_id_cart_items(existing_ids, prefix="CAI"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    max_id = max([int(x) for x in valid_ids], default=0)
+    new_id = f"{prefix}{max_id + 1}"
+    return new_id
+existing_ids = set(df_combined_cart_items['id'].tolist())
+duplicate_ids = df_combined_cart_items['id'][df_combined_cart_items['id'].duplicated()].tolist()
+for duplicate_id in duplicate_ids:
+    duplicate_indices = df_combined_cart_items.index[df_combined_cart_items['id'] == duplicate_id].tolist()
+    for idx in duplicate_indices[1:]:
+        new_id = generate_id_cart_items(existing_ids)
+        df_combined_cart_items.at[idx, 'id'] = new_id
+        existing_ids.add(new_id)
+
+print("Apakah terdapat kolom ID duplikat setelah penanganan:")
+print(df_combined_cart_items['id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel Cart Items sebelum penanganan:")
+print(df_combined_cart_items.dtypes)
+
+def correct_id_cart_items(value):
+    return bool(re.match(r"^CAI\d{4}$", str(value)))
+invalid_ids = df_combined_cart_items[~df_combined_cart_items['id'].apply(correct_id_cart_items)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['id']])
+
+df_combined_cart_items[['quantity', 'discount']] = df_combined_cart_items[['quantity', 'discount']].astype(int)
+
+df_combined_cart_items['price'] = pd.to_numeric(df_combined_cart_items['price'], errors='coerce')
+
+def correct_id_carts(value):
+    return bool(re.match(r"^CA\d{4}$", str(value)))
+invalid_ids = df_combined_cart_items[~df_combined_cart_items['carts_id'].apply(correct_id_carts)]
+print(f"Jumlah Carts ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['id']])
+
+def correct_product_sku(value):
+    return bool(re.match(r"^PSKU\d{4}$", str(value)))
+invalid_ids = df_combined_cart_items[~df_combined_cart_items['product_sku'].apply(correct_product_sku)]
+print(f"Jumlah Product SKU yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['product_sku']])
