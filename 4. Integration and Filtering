@@ -1,0 +1,115 @@
+df_inner_PassID = pd.merge(df_combined_passwords['id'], df_combined_users['password_id'], how='inner', left_on='id', right_on='password_id', indicator='merge')
+df_inner_PassID = pd.DataFrame(df_inner_PassID)
+df_inner_PassID.rename(columns={'id': 'password_id_passwords'}, inplace=True)
+df_inner_PassID.dropna(inplace=True)
+df_inner_PassID.drop_duplicates(inplace=True)
+
+df_inner_UserIDpass = pd.merge(df_combined_users['id'], df_combined_passwords['user_id'], how='inner', left_on='id', right_on='user_id', indicator='merge')
+df_inner_UserIDpass = pd.DataFrame(df_inner_UserIDpass)
+df_inner_UserIDpass.rename(columns={'id': 'user_id_users'}, inplace=True)
+df_inner_UserIDpass.dropna(inplace=True)
+df_inner_UserIDpass.drop_duplicates(inplace=True)
+
+df_left_IPID = pd.merge(df_combined_ip_addresses['id'], df_combined_users['ip_address_id'], how='left', left_on='id', right_on='ip_address_id', indicator='merge')
+df_left_IPID = pd.DataFrame(df_left_IPID)
+df_left_IPID.rename(columns={'id': 'ip_address_id_ip'}, inplace=True)
+df_left_IPID.dropna(inplace=True)
+df_left_IPID.drop_duplicates(inplace=True)
+
+df_combined_passwords_filtered = df_combined_passwords[
+    df_combined_passwords['user_id'].isin(df_inner_UserIDpass['user_id_users']) &
+    df_combined_passwords['id'].isin(df_inner_PassID['password_id'])]
+
+df_combined_users_filtered = df_combined_users[
+    df_combined_users['password_id'].isin(df_inner_PassID['password_id_passwords']) &
+    df_combined_users['id'].isin(df_inner_UserIDpass['user_id']) &
+	df_combined_users['ip_address_id'].isin(df_left_IPID['ip_address_id_ip'])]
+
+df_left_UserIDphy = pd.merge(df_combined_users_filtered['id'], df_combined_physical_addresses['user_id'], how='left', left_on='id', right_on='user_id', indicator='merge')
+df_left_UserIDphy = pd.DataFrame(df_left_UserIDphy)
+df_left_UserIDphy.rename(columns={'id': 'user_id_users'}, inplace=True)
+df_left_UserIDphy.dropna(inplace=True)
+df_left_UserIDphy.drop_duplicates(inplace=True)
+
+df_left_SourceID = pd.merge(df_combined_source['id'], df_combined_physical_addresses['source_id'], how='left', left_on='id', right_on='source_id', indicator='merge')
+df_left_SourceID = pd.DataFrame(df_left_SourceID)
+df_left_SourceID.rename(columns={'id': 'source_id_source'}, inplace=True)
+df_left_SourceID.dropna(inplace=True)
+df_left_SourceID.drop_duplicates(inplace=True)
+
+df_combined_physical_addresses_filtered = df_combined_physical_addresses[
+    df_combined_physical_addresses['user_id'].isin(df_left_UserIDphy['user_id_users']) &
+    df_combined_physical_addresses['source_id'].isin(df_left_SourceID['source_id_source'])]
+
+df_left_UserIDor = pd.merge(df_combined_users_filtered['id'], df_combined_orders['user_id'], how='left', left_on='id', right_on='user_id', indicator='merge')
+df_left_UserIDor = pd.DataFrame(df_left_UserIDor)
+df_left_UserIDor.rename(columns={'id': 'user_id_users'}, inplace=True)
+df_left_UserIDor.dropna(inplace=True)
+df_left_UserIDor.drop_duplicates(inplace=True)
+
+df_left_CartsIDor = pd.merge(df_combined_carts['id'], df_combined_orders['carts_id'], how='left', left_on='id', right_on='carts_id', indicator='merge')
+df_left_CartsIDor = pd.DataFrame(df_left_CartsIDor)
+df_left_CartsIDor.rename(columns={'id': 'carts_id_carts'}, inplace=True)
+df_left_CartsIDor.dropna(inplace=True)
+df_left_CartsIDor.drop_duplicates(inplace=True)
+
+df_combined_orders_filtered = df_combined_orders[
+    df_combined_orders['user_id'].isin(df_left_UserIDor['user_id_users']) &
+    df_combined_orders['carts_id'].isin(df_left_CartsIDor['carts_id_carts'])]
+
+df_left_DimID = pd.merge(df_mdb_dimensions['_id'], df_mdb_product_types['dimensions_id'], how='left', left_on='_id', right_on='dimensions_id', indicator='merge')
+df_left_DimID = pd.DataFrame(df_left_DimID)
+df_left_DimID.rename(columns={'_id': 'dimensions_id_dimensions'}, inplace=True)
+df_left_DimID.dropna(inplace=True)
+df_left_DimID.drop_duplicates(inplace=True)
+
+df_left_ImgID = pd.merge(df_mdb_images['_id'], df_mdb_product_types['images_id'], how='left', left_on='_id', right_on='images_id', indicator='merge')
+df_left_ImgID = pd.DataFrame(df_left_ImgID)
+df_left_ImgID.rename(columns={'_id': 'images_id_images'}, inplace=True)
+df_left_ImgID.dropna(inplace=True)
+df_left_ImgID.drop_duplicates(inplace=True)
+
+df_left_PriceIDtypes = pd.merge(df_mdb_prices['_id'], df_mdb_product_types['price_id'], how='left', left_on='_id', right_on='price_id', indicator='merge')
+df_left_PriceIDtypes = pd.DataFrame(df_left_PriceIDtypes)
+df_left_PriceIDtypes.rename(columns={'_id': 'price_id_prices'}, inplace=True)
+df_left_PriceIDtypes.dropna(inplace=True)
+df_left_PriceIDtypes.drop_duplicates(inplace=True)
+
+df_combined_product_types_filtered = df_mdb_product_types[
+    df_mdb_product_types['price_id'].isin(df_left_PriceIDtypes['price_id_prices']) &
+    df_mdb_product_types['dimensions_id'].isin(df_left_DimID['dimensions_id_dimensions']) &
+    df_mdb_product_types['images_id'].isin(df_left_ImgID['images_id_images'])]
+
+df_left_TypesIDci = pd.merge(df_combined_product_types_filtered['_id'], df_combined_cart_items['product_sku'], how='left', left_on='_id', right_on='product_sku', indicator='merge')
+df_left_TypesIDci = pd.DataFrame(df_left_TypesIDci)
+df_left_TypesIDci.rename(columns={'_id': 'product_types_types'}, inplace=True)
+df_left_TypesIDci.dropna(inplace=True)
+df_left_TypesIDci.drop_duplicates(inplace=True)
+
+df_left_CartsIDci = pd.merge(df_combined_carts['id'], df_combined_cart_items['carts_id'], how='left', left_on='id', right_on='carts_id', indicator='merge')
+df_left_CartsIDci = pd.DataFrame(df_left_CartsIDci)
+df_left_CartsIDci.rename(columns={'id': 'carts_id_carts'}, inplace=True)
+df_left_CartsIDci.dropna(inplace=True)
+df_left_CartsIDci.drop_duplicates(inplace=True)
+
+df_combined_cart_items_filtered = df_combined_cart_items[
+    df_combined_cart_items['product_sku'].isin(df_left_TypesIDci['product_types_types']) &
+    df_combined_cart_items['carts_id'].isin(df_left_CartsIDci['carts_id_carts'])]
+
+df_left_PriceIDpri = pd.merge(df_mdb_prices['_id'], df_mdb_options['price_id'], how='left', left_on='_id', right_on='price_id', indicator='merge')
+df_left_PriceIDpri = pd.DataFrame(df_left_PriceIDpri)
+df_left_PriceIDpri.rename(columns={'_id': 'price_id_prices'}, inplace=True)
+df_left_PriceIDpri.dropna(inplace=True)
+df_left_PriceIDpri.drop_duplicates(inplace=True)
+
+df_combined_options_filtered = df_mdb_options[
+    df_mdb_options['price_id'].isin(df_left_PriceIDpri['price_id_prices'])]
+
+df_left_TypesIDpro = pd.merge(df_combined_product_types_filtered['_id'], df_mdb_products['product_types'], how='left', left_on='_id', right_on='product_types', indicator='merge')
+df_left_TypesIDpro = pd.DataFrame(df_left_TypesIDpro)
+df_left_TypesIDpro.rename(columns={'_id': 'product_types_products'}, inplace=True)
+df_left_TypesIDpro.dropna(inplace=True)
+df_left_TypesIDpro.drop_duplicates(inplace=True)
+
+df_combined_products_filtered = df_mdb_products[
+    df_mdb_products['product_types'].isin(df_left_TypesIDpro['product_types_products']) ]
