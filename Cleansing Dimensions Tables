@@ -1,0 +1,22 @@
+# DIMENSIONS
+# Cek data null
+print("Jumlah data null:")
+print(df_mdb_dimensions.isnull().sum())
+
+# Cek duplikat dan penanganan
+print("Apakah terdapat data duplikat:")
+print(df_mdb_dimensions.duplicated().any())
+print("Apakah terdapat kolom ID duplikat:")
+print(df_mdb_dimensions['_id'].duplicated().any())
+
+# Cek type data (menyelaraskan formatnya)
+print("Type data tabel IP Addresses sebelum penanganan:")
+print(df_mdb_dimensions.dtypes)
+
+def correct_id_dimensions(value):
+    return bool(re.match(r"^DM\d{4}$", str(value)))
+invalid_ids = df_mdb_dimensions[~df_mdb_dimensions['_id'].apply(correct_id_dimensions)]
+print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
+print(invalid_ids[['_id']])
+
+df_mdb_dimensions[['height', 'length', 'width']] = df_mdb_dimensions[['height', 'length', 'width']].astype(int)
