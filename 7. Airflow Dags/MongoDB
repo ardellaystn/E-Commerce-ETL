@@ -1,0 +1,63 @@
+import datetime
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+import pymongo
+import papermill as pm
+
+def check_new_data_mongo():
+    client = pymongo.MongoClient("mongodb://172.16.36.13:27017/")
+    db = client['lokakarya']
+
+    collections = ['product_types', 'products', 'prices', 'dimensions', 'images', 'options']
+
+    for collection_name in collections:
+        collection = db[collection_name]
+
+        query = {} 
+        
+        count = collection.count_documents(query)
+        
+        if count > 0:
+            print(f"Ada {count} data baru di koleksi {collection_name}.")
+            return True
+        else:
+            print(f"Tidak ada data baru di koleksi {collection_name}.")
+
+    print("Tidak ada data baru di koleksi-koleksi MongoDB.")
+    return False
+
+def run_notebook():
+    input_notebook = '/home/ardella/airflow/lokakarya.ipynb'
+    output_notebook = '/home/ardella/airflow/lokakarya_output_mongodb.ipynb'
+    pm.execute_notebook(input_notebook, output_notebook)
+
+
+# Definisi DAG
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime.datetime(2024, 12, 5),
+    'retries': 3,
+}
+
+dag = DAG(
+    dag_id='mongodb_data_monitoring',
+    default_args=default_args,
+    description='DAG untuk memonitor data baru di MongoDB dan menjalankan notebook',
+    schedule_interval='@hourly', 
+)
+
+# Task untuk memeriksa data baru di MongoDB
+check_new_data_mongo = PythonOperator(
+    task_id='check_new_data_mongo',
+    python_callable=check_new_data_mongo,
+    dag=dag,
+)
+
+# Task untuk menjalankan notebook jika ada data baru
+run_notebook = PythonOperator(
+    task_id='run_notebook',
+    python_callable=run_notebook,
+    dag=dag,
+)
+
+check_new_data_mongo >> run_notebook
