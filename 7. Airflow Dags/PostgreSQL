@@ -1,0 +1,75 @@
+import datetime
+import psycopg2
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+import papermill as pm
+
+# Fungsi untuk mengecek data baru pada PostgreSQL (per tabel)
+def check_new_data():
+    conn = psycopg2.connect(
+        dbname="lokakarya",
+        user="postgres",
+        password="ardella",
+        host="172.16.36.2",
+        port="5432"
+    )
+    
+    cur = conn.cursor()
+    
+    queries = {
+        'users': "SELECT COUNT(*) FROM users;",
+        'passwords': "SELECT COUNT(*) FROM passwords;",
+        'ip_addresses': "SELECT COUNT(*) FROM ip_addresses;",
+        'physical_addresses': "SELECT COUNT(*) FROM physical_addresses;",
+        'source': "SELECT COUNT(*) FROM source;",
+        'orders': "SELECT COUNT(*) FROM orders;",
+        'carts': "SELECT COUNT(*) FROM carts;",
+        'cart_items': "SELECT COUNT(*) FROM cart_items;"
+    }
+
+    for table, query in queries.items():
+        cur.execute(query)
+        result = cur.fetchone()
+        if result[0] > 0:
+            print(f"Ada {result[0]} baris data di tabel {table}.")
+            return True
+        else:
+            print(f"Tidak ada data baru di tabel {table}.")
+
+    print("Tidak ada data baru di tabel users, ip_addresses, atau passwords.")
+    return False
+
+def run_notebook():
+    input_notebook = '/home/ardella/airflow/lokakarya.ipynb'
+    output_notebook = '/home/ardella/airflow/lokakarya_output_postgresql.ipynb'
+    pm.execute_notebook(input_notebook, output_notebook)
+
+# Definisi DAG
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime.datetime(2024, 12, 5),
+    'retries': 3,
+}
+
+dag = DAG(
+    dag_id='postgresql_data_monitoring',
+    default_args=default_args,
+    description='DAG untuk memonitor data baru di PostgreSQL dan menjalankan notebook',
+    schedule_interval='@hourly',
+)
+
+# Task untuk memeriksa data baru
+check_new_data = PythonOperator(
+    task_id='check_new_data',
+    python_callable=check_new_data,
+    dag=dag,
+)
+
+# Task untuk menjalankan notebook jika ada data baru
+run_notebook = PythonOperator(
+    task_id='run_notebook',
+    python_callable=run_notebook,
+    dag=dag,
+)
+
+check_new_data >> run_notebook
