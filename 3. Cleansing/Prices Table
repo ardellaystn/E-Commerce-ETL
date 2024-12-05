@@ -19,6 +19,12 @@ invalid_ids = df_mdb_prices[~df_mdb_prices['_id'].apply(correct_id_prices)]
 print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
 print(invalid_ids[['_id']])
 
+df_mdb_prices.loc[df_mdb_prices['currency'].str.contains(r'[\s\;:]+', regex=True, na=False), 'currency'] = 'Unknown'
+df_mdb_prices['currency'] = df_mdb_prices['currency'].replace(['', '.', ' '], 'Unknown')
+invalid_fname = df_mdb_prices[df_mdb_prices['currency'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah currency yang tidak konsisten: {invalid_fname.shape[0]}")
+print(invalid_fname[['currency']])
+
 df_mdb_prices['bulk_discount'] = pd.to_numeric(df_mdb_prices['bulk_discount'], errors='coerce')
 df_mdb_prices['discount'] = pd.to_numeric(df_mdb_prices['discount'], errors='coerce')
 df_mdb_prices['discount_quantity'] = pd.to_numeric(df_mdb_prices['discount_quantity'], errors='coerce')
