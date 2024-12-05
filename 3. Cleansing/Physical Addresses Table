@@ -75,7 +75,7 @@ invalid_street_number = df_combined_physical_addresses[df_combined_physical_addr
 print(f"Jumlah street_number yang tidak konsisten: {invalid_street_number.shape[0]}")
 print(invalid_street_number[['street_number']])
 
-df_combined_physical_addresses.loc[df_combined_physical_addresses['street'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'street'] = 'Unknown'
+df_combined_physical_addresses['street'] = df_combined_physical_addresses['street'].replace([''], 'Unknown')
 invalid_street = df_combined_physical_addresses[ df_combined_physical_addresses['street'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
 print(f"Jumlah street yang tidak konsisten: {invalid_street.shape[0]}")
 print(invalid_street[['street']])
@@ -84,17 +84,17 @@ modus_directional = df_combined_physical_addresses['directional'].mode()[0]
 modus_suffix = df_combined_physical_addresses['suffix'].mode()[0]
 modus_unit_type = df_combined_physical_addresses['unit_type'].mode()[0]
 
-df_combined_physical_addresses.loc[df_combined_physical_addresses['directional'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'directional'] = modus_directional
+df_combined_physical_addresses['directional'] = df_combined_physical_addresses['directional'].replace(['', '.', ' '], modus_directional)
 invalid_directional = df_combined_physical_addresses[ df_combined_physical_addresses['directional'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
 print(f"Jumlah directional yang tidak konsisten: {invalid_directional.shape[0]}")
 print(invalid_directional[['directional']])
 
-df_combined_physical_addresses.loc[df_combined_physical_addresses['suffix'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'suffix'] = modus_suffix
+df_combined_physical_addresses['suffix'] = df_combined_physical_addresses['suffix'].replace(['', '.', ' '], modus_suffix)
 invalid_suffix = df_combined_physical_addresses[ df_combined_physical_addresses['suffix'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
 print(f"Jumlah suffix yang tidak konsisten: {invalid_suffix.shape[0]}")
 print(invalid_suffix[['suffix']])
 
-df_combined_physical_addresses.loc[df_combined_physical_addresses['unit_type'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'unit_type'] = modus_unit_type
+df_combined_physical_addresses['unit_type'] = df_combined_physical_addresses['unit_type'].replace(['', '.', ' '], modus_unit_type)
 invalid_unit_type = df_combined_physical_addresses[ df_combined_physical_addresses['unit_type'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
 print(f"Jumlah unit_type yang tidak konsisten: {invalid_unit_type.shape[0]}")
 print(invalid_unit_type[['unit_type']])
