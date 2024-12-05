@@ -105,7 +105,7 @@ print(f"Jumlah unit_number yang tidak konsisten: {invalid_unit_number.shape[0]}"
 print(invalid_unit_number[['unit_number']])
 
 df_combined_physical_addresses.loc[df_combined_physical_addresses['zip_code'].str.contains(r'[\s\.,;:]+', regex=True, na=False),'zip_code'] = 0
-df_combined_physical_addresses['zip_code'] = pd.to_numeric(df_combined_physical_addresses['zip_code'], errors='coerce').fillna(0).astype(int)
+df_combined_physical_addresses['zip_code'] = df_combined_physical_addresses['zip_code'].fillna(0).astype(str)
 invalid_zip_code = df_combined_physical_addresses[df_combined_physical_addresses['zip_code'] == 0]
 print(f"Jumlah zip_code yang tidak konsisten: {invalid_zip_code.shape[0]}")
 print(invalid_zip_code[['zip_code']])
