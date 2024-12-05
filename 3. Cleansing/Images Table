@@ -19,8 +19,9 @@ invalid_ids = df_mdb_images[~df_mdb_images['_id'].apply(correct_id_images)]
 print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
 print(invalid_ids[['_id']])
 
-df_mdb_images.loc[df_mdb_images['source'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'source'] =  'Unknown'
-invalid_source = df_mdb_images[ df_mdb_images['source'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+df_mdb_images.loc[df_mdb_images['source'].str.contains(r'[\s\,;]+', regex=True, na=False), 'source'] =  'Unknown'
+df_mdb_images['source'] = df_mdb_images['source'].replace(['', ' '], 'Unknown')
+invalid_source = df_mdb_images[ df_mdb_images['source'].str.contains(r'[\s\,;]+', regex=True, na=False)]
 print(f"Jumlah source yang tidak konsisten: {invalid_source.shape[0]}")
 
 modus_label = df_mdb_images['label'].mode()[0]
