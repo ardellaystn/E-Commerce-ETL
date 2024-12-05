@@ -76,6 +76,18 @@ invalid_ids = df_combined_cart_items[~df_combined_cart_items['carts_id'].apply(c
 print(f"Jumlah Carts ID yang tidak konsisten: {invalid_ids.shape[0]}")
 print(invalid_ids[['id']])
 
+def generate_product_sku(existing_ids, prefix="PSKU"):
+    valid_ids = [x[len(prefix):] for x in existing_ids if x.startswith(prefix) and x[len(prefix):].isdigit()]
+    max_id = max([int(x) for x in valid_ids], default=0)
+    new_id = f"{prefix}{max_id + 1}"
+    return new_id
+existing_ids = set(df_combined_cart_items['product_sku'].tolist())
+invalid_product_skus = df_combined_cart_items[df_combined_cart_items['product_sku'].isin(['', '.'])]
+invalid_product_sku_indices = invalid_product_skus.index.tolist()
+for idx in invalid_product_sku_indices:
+    new_id = generate_product_sku(existing_ids)
+    df_combined_cart_items.at[idx, 'product_sku'] = new_id
+    existing_ids.add(new_id)
 def correct_product_sku(value):
     return bool(re.match(r"^PSKU\d{4}$", str(value)))
 invalid_ids = df_combined_cart_items[~df_combined_cart_items['product_sku'].apply(correct_product_sku)]
