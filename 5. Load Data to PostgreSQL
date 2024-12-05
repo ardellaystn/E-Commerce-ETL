@@ -1,4 +1,24 @@
-engine = create_engine('postgresql://postgres:password@172.16.36.13:5432/lokakarya')
+from sqlalchemy import create_engine, MetaData
+DATABASE_URI = 'postgresql://postgres:ardella@172.16.36.13:5432/schema_lokakarya'
+engine = create_engine(DATABASE_URI)
+def drop_all_tables(engine):
+    """
+    Menghapus semua tabel di database PostgreSQL, termasuk dari skema non-default.
+    """
+    meta = MetaData()
+    with engine.connect() as connection:
+        meta.reflect(bind=connection, schema='public')
+        print(f"Tabel yang ditemukan: {list(meta.tables.keys())}")
+        if meta.tables:
+            meta.drop_all(bind=connection)
+            connection.commit()
+            print("Semua tabel berhasil dihapus.")
+        else:
+            print("Tidak ada tabel yang ditemukan.")
+if __name__ == "__main__":
+    drop_all_tables(engine)
+
+engine = create_engine('postgresql://postgres:ardella@172.16.36.13:5432/schema_lokakarya')
 df_combined_ip_addresses.to_sql('ip_addresses', engine, if_exists='replace', index=False)
 df_combined_carts.to_sql('carts', engine, if_exists='replace', index=False)
 df_combined_cart_items_filtered.to_sql('cart_items', engine, if_exists='replace', index=False)
