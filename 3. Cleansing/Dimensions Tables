@@ -19,4 +19,11 @@ invalid_ids = df_mdb_dimensions[~df_mdb_dimensions['_id'].apply(correct_id_dimen
 print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
 print(invalid_ids[['_id']])
 
+modus_unit = df_mdb_dimensions['unit'].mode()[0]
+df_mdb_dimensions.loc[df_mdb_dimensions['unit'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'unit'] = modus_unit
+df_mdb_dimensions['unit'] = df_mdb_dimensions['unit'].replace(['', '.', ' '], modus_unit)
+invalid_fname = df_mdb_dimensions[df_mdb_dimensions['unit'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah unit yang tidak konsisten: {invalid_fname.shape[0]}")
+print(invalid_fname[['unit']])
+
 df_mdb_dimensions[['height', 'length', 'width']] = df_mdb_dimensions[['height', 'length', 'width']].astype(int)
