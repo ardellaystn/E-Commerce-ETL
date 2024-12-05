@@ -81,7 +81,7 @@ print(invalid_email[['nickname']])
 
 df_combined_users.loc[df_combined_users['email'].str.contains(r'[\s\,;:]+', regex=True, na=False), 'email'] = 'Unknown'
 df_combined_users['email'] = df_combined_users['email'].replace(['', ' '], 'Unknown')
-invalid_email = df_combined_users[ df_combined_users['email'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+invalid_email = df_combined_users[ df_combined_users['email'].str.contains(r'[\s\,;:]+', regex=True, na=False)]
 print(f"Jumlah email yang tidak konsisten: {invalid_email.shape[0]}")
 print(invalid_email[['email']])
 
