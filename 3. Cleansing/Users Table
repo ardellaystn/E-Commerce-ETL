@@ -62,16 +62,25 @@ print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
 print(invalid_ids[['id']])
 
 df_combined_users.loc[df_combined_users['fname'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'fname'] = 'Unknown'
-invalid_fname = df_combined_users[ df_combined_users['fname'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+df_combined_users['fname'] = df_combined_users['fname'].replace(['', '.', ' '], 'Unknown')
+invalid_fname = df_combined_users[df_combined_users['fname'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
 print(f"Jumlah fname yang tidak konsisten: {invalid_fname.shape[0]}")
 print(invalid_fname[['fname']])
 
 df_combined_users.loc[df_combined_users['lname'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'lname'] = 'Unknown'
+df_combined_users['lname'] = df_combined_users['lname'].replace(['', '.', ' '], 'Unknown')
 invalid_lname = df_combined_users[ df_combined_users['lname'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
 print(f"Jumlah lname yang tidak konsisten: {invalid_lname.shape[0]}")
 print(invalid_lname[['lname']])
 
-df_combined_users.loc[df_combined_users['email'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'email'] = 'Unknown'
+df_combined_users.loc[df_combined_users['nickname'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'nickname'] = 'Unknown'
+df_combined_users['nickname'] = df_combined_users['nickname'].replace(['', '.', ' '], 'Unknown')
+invalid_email = df_combined_users[df_combined_users['nickname'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+print(f"Jumlah nickname yang tidak konsisten: {invalid_email.shape[0]}")
+print(invalid_email[['nickname']])
+
+df_combined_users.loc[df_combined_users['email'].str.contains(r'[\s\,;:]+', regex=True, na=False), 'email'] = 'Unknown'
+df_combined_users['email'] = df_combined_users['email'].replace(['', ' '], 'Unknown')
 invalid_email = df_combined_users[ df_combined_users['email'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
 print(f"Jumlah email yang tidak konsisten: {invalid_email.shape[0]}")
 print(invalid_email[['email']])
