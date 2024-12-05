@@ -1,0 +1,57 @@
+import datetime
+import os
+import hashlib
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+import papermill as pm
+
+def check_xlsx_file():
+    file_path = '/home/ardella/airflow/full_generated_data1 (2).xlsx'
+    
+    if not os.path.exists(file_path):
+        print(f"File {file_path} tidak ditemukan.")
+        return False
+
+    file_timestamp = os.path.getmtime(file_path)
+
+    if file_timestamp > (datetime.datetime.now().timestamp() - 3600): 
+        print(f"File {file_path} telah diperbarui.")
+        return True
+    else:
+        print(f"File {file_path} tidak diperbarui dalam 1 jam terakhir.")
+        return False
+
+def run_notebook():
+    input_notebook = '/home/ardella/airflow/lokakarya.ipynb'
+    output_notebook = '/home/ardella/airflow/lokakarya_output_xlsx.ipynb'
+    pm.execute_notebook(input_notebook, output_notebook)
+
+# Definisi DAG
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime.datetime(2024, 12, 5),
+    'retries': 3,
+}
+
+dag = DAG(
+    dag_id='xlsx_file_monitoring',
+    default_args=default_args,
+    description='DAG untuk memonitor file XLSX dan menjalankan notebook',
+    schedule_interval='@hourly',  # Menjalankan setiap jam
+)
+
+# Task untuk memeriksa file XLSX
+check_xlsx_file = PythonOperator(
+    task_id='check_xlsx_file',
+    python_callable=check_xlsx_file,
+    dag=dag,
+)
+
+# Task untuk menjalankan notebook jika file diperbarui
+run_notebook = PythonOperator(
+    task_id='run_notebook',
+    python_callable=run_notebook,
+    dag=dag,
+)
+
+check_xlsx_file >> run_notebook
