@@ -19,8 +19,8 @@ invalid_ids = df_mdb_product_types[~df_mdb_product_types['_id'].apply(correct_id
 print(f"Jumlah ID yang tidak konsisten: {invalid_ids.shape[0]}")
 print(invalid_ids[['_id']])
 
-df_mdb_product_types.loc[df_mdb_product_types['description'].str.contains(r'[\s\.,;:]+', regex=True, na=False), 'description'] = 'Unknown'
-invalid_description = df_mdb_product_types[ df_mdb_product_types['description'].str.contains(r'[\s\.,;:]+', regex=True, na=False)]
+df_mdb_product_types['description'] = df_mdb_product_types['description'].replace(['', '.', ' '], 'Unknown')
+invalid_description = df_mdb_product_types[ df_mdb_product_types['description'].isin(['', '.', ' '])]
 print(f"Jumlah description yang tidak konsisten: {invalid_description.shape[0]}")
 
 mean_stock = df_mdb_product_types['stock'].mean()
